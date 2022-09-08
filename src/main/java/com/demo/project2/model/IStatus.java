@@ -1,2 +1,9 @@
-package com.demo.project2.model;public class IStatus {
+package com.demo.project2.model;
+
+public enum IStatus {
+
+    DRAFT,
+    PENDING,
+    APPROVED,
+    PAID
 }

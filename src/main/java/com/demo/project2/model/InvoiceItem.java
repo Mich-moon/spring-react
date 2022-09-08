@@ -1,51 +1,52 @@
 package com.demo.project2.model;
 
+import java.math.BigDecimal;
+
 import javax.persistence.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 
 @Entity
-@Table(name = "invoice_addresses")
-public class InvoiceAddress {
+@Table(name = "invoice_items")
+public class InvoiceItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "item_id")
     private long id;
 
     @NotBlank
-    @Size(max = 30)
-    private String company;
+    @Size(max = 50)
+    private String description;
 
-    @NotBlank
-    @Size(max = 40)
-    private String street;
+    @DecimalMin(value = "0.00", inclusive = true)
+    @Digits(integer=30, fraction=2)
+    @PositiveOrZero
+    private BigDecimal price;
 
-    @NotBlank
-    @Size(max = 25)
-    private String city;
+    @Min(value = 1, message = "Quantity should not be less than 1")
+    @Positive
+    private Integer quantity;
 
-    @NotBlank
-    @Size(max = 20)
-    private String state;
-
-    @NotBlank
-    @Size(max = 10)
-    private String zip;
+    @DecimalMin(value = "0.00", inclusive = true)
+    @Digits(integer=30, fraction=2)
+    @PositiveOrZero
+    private BigDecimal amount;
 
     // constructors
-    public InvoiceAddress() {
+    public InvoiceItem() {
 
     }
 
-    public InvoiceAddress(String company, String street, String city, String state, String zip) {
+    public InvoiceItem(String description, String price, String quantity, String amount) {
+        // NB - all numeric values are being passed as strings
+
         super();
-        this.company = company;
-        this.street = street;
-        this.city = city;
-        this.state = state;
-        this.zip = zip;
+        this.description = description;
+        this.price = new BigDecimal(price);
+        this.quantity = Integer.parseInt(quantity);
+        this.amount = new BigDecimal(amount);
     }
 
     // setters
@@ -53,24 +54,18 @@ public class InvoiceAddress {
         this.id = id;
     }
 
-    public void setCompany(String company) {
-        this.company = company;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public void setStreet(String street) {
-        this.street = street;
+    public void setPrice(String price) { this.price = new BigDecimal(price); }
+
+    public void setQuantity(String quantity) {
+        this.quantity = Integer.parseInt(quantity);
     }
 
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public void setZip(String zip) {
-        this.zip = zip;
+    public void setAmount(String amount) {
+        this.amount = new BigDecimal(amount);
     }
 
     // getters
@@ -78,23 +73,16 @@ public class InvoiceAddress {
         return id;
     }
 
-    public String getCompany() {
-        return company;
+    public String getDescription() {
+        return description;
     }
 
-    public String getStreet() {
-        return street;
+    public BigDecimal getPrice() { return price; }
+
+    public Integer getQuantity() {
+        return quantity;
     }
 
-    public String getCity() {
-        return city;
-    }
+    public BigDecimal getAmount() { return amount; }
 
-    public String getState() {
-        return state;
-    }
-
-    public String getZip() {
-        return zip;
-    }
 }
