@@ -39,7 +39,10 @@ public class User {
     @Size(max = 120)
     private String password;
 
-    // many-to-many relation... new table called user_roles
+    // many-to-many relation
+    // @JoinTable creates a separate table called user_roles to hold the
+    //  relationship between users and roles. ie The ids for both tables
+    //  are stored in a table (hence no Foreign Keys).
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(	name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
