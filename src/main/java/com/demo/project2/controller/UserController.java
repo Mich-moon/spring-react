@@ -115,7 +115,11 @@ public class UserController {
                 currentUser.setFirstName(userUpdate.getFirstName());
                 currentUser.setLastName(userUpdate.getLastName());
                 currentUser.setPassword(userUpdate.getPassword());
-                currentUser.setRoles(userUpdate.getRoles());
+
+                // NB modify the roles that Hibernate is tracking
+                currentUser.getRoles().clear();
+                currentUser.getRoles().addAll(userUpdate.getRoles());
+                //currentUser.setRoles(userUpdate.getRoles());
 
                 userRepository.save(currentUser);   // save new details
 
