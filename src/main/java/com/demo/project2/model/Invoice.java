@@ -114,7 +114,6 @@ public class Invoice {
     //  child objects (invoice_items) that are not present in the database, when saving the parent (invoice)
     private  Set<InvoiceItem> items = new HashSet<>(); // hashset to hold invoice item(s)
 
-    @NotBlank
     @Size(max = 120)
     private String comments;
 
