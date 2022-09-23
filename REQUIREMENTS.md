@@ -8,6 +8,7 @@
 - A vendor must be able to edit their account information (biographic and security details).
 - A vendor must be able to remove their own account.
 - An admin must be able to view all users.
+- An admin must be able to search for users.
 - An admin must be able to remove any account.
 - An admin must be able to edit any user's role.
 - A vendor must be able to create a new invoice and save it.
@@ -35,15 +36,4 @@
     - Ease of Use
 
 ### Use Cases
-1. **Title:** Create account
-    - **Actor:** Vendor
-    - **Scenario:**
-      - Vendor navigates to the app's landing page.
-      - Vendor clicks Sign Up.
-      - Vendor is redirected to the Sign up page and fills out the required fields.
-      - The vendor clicks Sign Up and is redirected to their personal dashboard.
-
-2. **Title:** ...
-    - **Actor:** ...
-    - **Scenario:**
-      - ...
+- [Authentication](usecase.auth.md)
