@@ -3,8 +3,7 @@
 ## Functional Requirements
 
 - A vendor must be able to create an account.
-- A vendor must be able to log into their account.
-- A vendor must be able to log out of their account.
+- A vendor must be able to log into and log out of their account.
 - A vendor must be able to view their account details.
 - A vendor must be able to edit their account information (biographic and security details).
 - A vendor must be able to remove their own account.
