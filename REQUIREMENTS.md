@@ -19,7 +19,7 @@
 - A vendor must be able to edit their own invoice(s).
 - A vendor must be able to delete their own invoice(s).
 - A moderator must be able to view all invoices.
-- A moderator must be able to edit any invoice status.
+- A moderator must be able to edit any invoice.
 - A moderator must be able to delete any invoice(s).
 
 ### End-User Observation  
