@@ -22,7 +22,7 @@
 - A moderator must be able to edit any invoice status.
 - A moderator must be able to delete any invoice(s).
 
-### End-User Observation
+### End-User Observation  
 - Points to be obeserved:
   - Task times
   - Error Rates
@@ -35,5 +35,5 @@
     - Features available
     - Ease of Use
 
-### Use Cases
+### Use Cases  
 - [Authentication](usecase.auth.md)
