@@ -78,9 +78,9 @@ public class AuthController {
         try {
             // check existing email
             if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-                return ResponseEntity
-                        .badRequest()
-                        .body("Error: Username is already taken!");
+
+                map.put("message", "Error: Username is already taken!" );
+                return new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
             }
 
             // Create new user's account
@@ -130,7 +130,8 @@ public class AuthController {
 
         } catch (Exception ex) {    // creation unsuccessful
             map.clear();
-            map.put("message", "Oops, something went wrong" );
+            //map.put("message", "Oops, something went wrong" );
+            map.put("message", ex.toString() );
             return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -184,6 +185,7 @@ public class AuthController {
     }
 
     @PostMapping("/refreshtoken")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
     public ResponseEntity<?> refreshtoken(@Valid @RequestBody TokenRefreshRequest request) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
@@ -228,7 +230,8 @@ public class AuthController {
 
         } catch (Exception ex) {    // Exception
             map.clear();
-            map.put("message", "Oops! something went wrong");
+            map.put("message", ex.toString() );
+            //map.put("message", "Oops! something went wrong");
             return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
