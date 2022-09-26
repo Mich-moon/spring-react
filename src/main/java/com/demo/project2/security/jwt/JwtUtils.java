@@ -1,4 +1,4 @@
-// JWT utility class
+// JWT utility class for JWT generation, validation and parsing
 
 package com.demo.project2.security.jwt;
 
@@ -51,7 +51,6 @@ public class JwtUtils {
     public String getEmailFromJwtToken(String token) {
 
         // get email form JWT
-
         return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();
     }
 
