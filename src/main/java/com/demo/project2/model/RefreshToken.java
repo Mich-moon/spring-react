@@ -1,5 +1,8 @@
 package com.demo.project2.model;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.Instant;
 import javax.persistence.*;
 
@@ -11,8 +14,9 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE) // prevent deleting referenced child on parent deletion
     private User user;
 
     @Column(nullable = false, unique = true)
