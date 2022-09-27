@@ -236,4 +236,22 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
+    public ResponseEntity<?> logout() {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
+
+        // log out the user
+
+        // Get the Principal object to check if the current user is authenticated or not
+        Object principle = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principle.toString() != "anonymousUser") {
+            Long userId = ((UserDetailsImpl) principle).getId();
+            refreshTokenService.deleteByUserId(userId); // remove Refresh Token from the database
+        }
+
+        map.put("message", "You have been logged out!");
+        return new ResponseEntity<>(map, HttpStatus.OK);
+    }
+
 }
