@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +33,8 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoder encoder;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
@@ -84,7 +87,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
@@ -114,7 +117,7 @@ public class UserController {
                 currentUser.setEmail(userUpdate.getEmail());
                 currentUser.setFirstName(userUpdate.getFirstName());
                 currentUser.setLastName(userUpdate.getLastName());
-                currentUser.setPassword(userUpdate.getPassword());
+                currentUser.setPassword(encoder.encode( userUpdate.getPassword() ));
 
                 // NB modify the roles that Hibernate is tracking
                 currentUser.getRoles().clear();
