@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatus;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,7 +42,7 @@ public class InvoiceController {
 
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?>  createInvoice(@Valid @RequestBody Invoice invoiceDetails) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
@@ -81,7 +83,7 @@ public class InvoiceController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?> getInvoices() {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
@@ -106,7 +108,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?>  getInvoice(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
@@ -130,7 +132,7 @@ public class InvoiceController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<?> deleteInvoice(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
@@ -148,7 +150,7 @@ public class InvoiceController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?> updateInvoice(@RequestBody Invoice invoiceUpdate, @PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
@@ -156,7 +158,7 @@ public class InvoiceController {
             if (invoiceRepository.findById(id).isPresent()) {  // Invoice found
                 Invoice currentInvoice = invoiceRepository.findById(id).get(); // get value found
 
-                // updating invoice details
+                // updating invoice details - except status
                 currentInvoice.setDate(LocalDate.now()); // Date object - (year, month, day (yyyy-MM-dd))
                 currentInvoice.setCompanyFrom(invoiceUpdate.getCompanyFrom());
                 currentInvoice.setStreetFrom(invoiceUpdate.getStreetFrom());
@@ -199,15 +201,17 @@ public class InvoiceController {
     }
 
     @PutMapping("/{id}/update-status")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?> updateInvoice(@PathVariable Long id, @RequestParam String status) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         try {
             if (invoiceRepository.findById(id).isPresent()) {  // Invoice found
                 Invoice currentInvoice = invoiceRepository.findById(id).get(); // get value found
 
-                // updating invoice details
+                // updating invoice status
                 if (!status.isEmpty()) {
 
                     switch (status) {
@@ -216,11 +220,15 @@ public class InvoiceController {
                             break;
 
                         case "approved":
-                            currentInvoice.setStatus(IStatus.APPROVED);
+                            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("MODERATOR"))) {
+                                currentInvoice.setStatus(IStatus.APPROVED);
+                            }
                             break;
 
                         case "paid":
-                            currentInvoice.setStatus(IStatus.PAID);
+                            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("MODERATOR"))) {
+                                currentInvoice.setStatus(IStatus.PAID);
+                            }
                             break;
 
                         default:

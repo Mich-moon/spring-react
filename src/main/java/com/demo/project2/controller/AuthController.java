@@ -241,7 +241,7 @@ public class AuthController {
     public ResponseEntity<?> logout() {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
-        // log out the user
+        // log out the user - remove user's refresh token from the database
 
         // Get the Principal object to check if the current user is authenticated or not
         Object principle = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
