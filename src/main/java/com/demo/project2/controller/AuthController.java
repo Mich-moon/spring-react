@@ -254,4 +254,25 @@ public class AuthController {
         return new ResponseEntity<>(map, HttpStatus.OK);
     }
 
+
+    @PostMapping("mock-login")
+    public ResponseEntity<?> checkAuth(@Valid @RequestBody LoginRequest loginRequest) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
+
+        try {
+            // authenticate { email, password }
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+
+            map.put("message", "Login Successful!" );
+            return new ResponseEntity<>(map, HttpStatus.OK);
+
+        } catch (Exception ex) {    // exception
+            map.clear();
+            map.put("message", "Login failed!" );
+            return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
 }
