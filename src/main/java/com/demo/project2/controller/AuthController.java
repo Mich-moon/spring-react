@@ -185,7 +185,6 @@ public class AuthController {
     }
 
     @PostMapping("/refreshtoken")
-    @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
     public ResponseEntity<?> refreshtoken(@Valid @RequestBody TokenRefreshRequest request) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
