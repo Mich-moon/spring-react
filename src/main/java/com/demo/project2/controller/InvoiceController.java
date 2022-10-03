@@ -3,6 +3,7 @@
 
 package com.demo.project2.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -65,7 +66,12 @@ public class InvoiceController {
                     invoiceDetails.getEmailTo(),
                     invoiceDetails.getItems(),
                     invoiceDetails.getComments(),
-                    invoiceDetails.getCreatedBy()
+                    invoiceDetails.getCreatedBy(),
+                    invoiceDetails.getSubtotal().toString(),
+                    invoiceDetails.getTaxRate().toString(),
+                    invoiceDetails.getTax().toString(),
+                    invoiceDetails.getTotalDue().toString()
+
             );
 
             //save Invoice to database using UserRepository
@@ -87,8 +93,18 @@ public class InvoiceController {
     public ResponseEntity<?> getInvoices() {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         try {
             List<Invoice> invoiceList = invoiceRepository.findAll();
+
+            /*List<Invoice> invoiceList = new ArrayList<>();
+
+            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("MODERATOR"))) {
+                invoiceList = invoiceRepository.findAll();
+            } else {
+                invoiceList = invoiceRepository.findAll();
+            }*/
 
             if (!invoiceList.isEmpty()) {  // Invoices found
                 map.put("invoices", invoiceList);
@@ -175,6 +191,12 @@ public class InvoiceController {
                 currentInvoice.setPhoneTo(invoiceUpdate.getPhoneTo());
                 currentInvoice.setEmailTo(invoiceUpdate.getEmailTo());
                 currentInvoice.setComments(invoiceUpdate.getComments());
+                currentInvoice.setCreatedBy(invoiceUpdate.getCreatedBy());
+                currentInvoice.setSubtotal(invoiceUpdate.getSubtotal());
+                currentInvoice.setTaxRate(invoiceUpdate.getTaxRate());
+                currentInvoice.setTax(invoiceUpdate.getTax());
+                currentInvoice.setTotalDue(invoiceUpdate.getTotalDue());
+
 
                 // NB modify the invoice_items that Hibernate is tracking
                 currentInvoice.getItems().clear();

@@ -3,6 +3,7 @@ package com.demo.project2.model;
 import java.util.HashSet;
 import java.util.Set;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 
 import javax.persistence.*;
 
@@ -125,11 +126,34 @@ public class Invoice {
     @Column(name = "created_by")
     private long createdBy;
 
+    @DecimalMin(value = "0.00", inclusive = true)
+    @Digits(integer=30, fraction=2)
+    @PositiveOrZero
+    private BigDecimal subtotal;
+
+    @DecimalMin(value = "0.00", inclusive = true)
+    @Digits(integer=30, fraction=2)
+    @PositiveOrZero
+    @Column(name = "tax_rate")
+    private BigDecimal taxRate;
+
+    @DecimalMin(value = "0.00", inclusive = true)
+    @Digits(integer=30, fraction=2)
+    @PositiveOrZero
+    private BigDecimal tax;
+
+    @DecimalMin(value = "0.00", inclusive = true)
+    @Digits(integer=30, fraction=2)
+    @PositiveOrZero
+    @Column(name = "total_due")
+    private BigDecimal totalDue;
+
     // non-null constructor
     public Invoice(String companyFrom, String streetFrom, String cityFrom, String stateFrom,
                    String zipFrom, String phoneFrom, String nameTo, String companyTo,
                    String streetTo, String cityTo, String stateTo, String zipTo, String phoneTo,
-                   String emailTo, Set<InvoiceItem> items, String comments, long createdBy) {
+                   String emailTo, Set<InvoiceItem> items, String comments, long createdBy,
+                   String subtotal, String taxRate, String tax, String totalDue) {
 
         super();
         this.date = LocalDate.now(); // Create a date object - (year, month, day (yyyy-MM-dd))
@@ -151,6 +175,10 @@ public class Invoice {
         this.comments = comments;
         this.status = IStatus.DRAFT; // saved as a draft
         this.createdBy = createdBy;
+        this.subtotal = new BigDecimal(subtotal);
+        this.taxRate = new BigDecimal(taxRate);
+        this.tax = new BigDecimal(tax);
+        this.totalDue = new BigDecimal(totalDue);
     }
 
     // setters and getters, toString() and equals() automatically created by Lombok annotation
