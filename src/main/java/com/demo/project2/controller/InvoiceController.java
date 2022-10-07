@@ -93,7 +93,7 @@ public class InvoiceController {
     public ResponseEntity<?> getInvoices() {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        //Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         try {
             List<Invoice> invoiceList = invoiceRepository.findAll();
