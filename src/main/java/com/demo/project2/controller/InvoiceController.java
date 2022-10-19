@@ -204,6 +204,7 @@ public class InvoiceController {
 
                 invoiceRepository.save(currentInvoice);   // save new details
 
+                map.put("invoice", currentInvoice);
                 map.put("message", "Invoice updated successfully");
                 return new ResponseEntity<>(map, HttpStatus.OK);
 
@@ -260,6 +261,7 @@ public class InvoiceController {
 
                 invoiceRepository.save(currentInvoice);   // save new details
 
+                map.put("invoice", currentInvoice);
                 map.put("message", "Invoice updated successfully");
                 return new ResponseEntity<>(map, HttpStatus.OK);
 
