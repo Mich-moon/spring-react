@@ -117,12 +117,12 @@ public class UserController {
                 currentUser.setEmail(userUpdate.getEmail());
                 currentUser.setFirstName(userUpdate.getFirstName());
                 currentUser.setLastName(userUpdate.getLastName());
-                currentUser.setPassword(encoder.encode( userUpdate.getPassword() ));
+                // EXCLUDED - currentUser.setPassword(encoder.encode( userUpdate.getPassword() ));
 
                 // NB modify the roles that Hibernate is tracking
                 currentUser.getRoles().clear();
                 currentUser.getRoles().addAll(userUpdate.getRoles());
-                //currentUser.setRoles(userUpdate.getRoles());
+                // DON'T DO THIS -> currentUser.setRoles(userUpdate.getRoles());
 
                 userRepository.save(currentUser);   // save new details
 
@@ -143,5 +143,34 @@ public class UserController {
 
     }
 
+    @PutMapping("/newpassword/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    public ResponseEntity<?> updateUserPassword(@RequestBody String newPassword, @PathVariable Long id) {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
+
+        try {
+            if (userRepository.findById(id).isPresent()) {  // User found
+                User currentUser = userRepository.findById(id).get(); // get value found
+
+                currentUser.setPassword(encoder.encode( newPassword )); // update user password
+
+                userRepository.save(currentUser);   // save new details
+
+                map.put("message", "User password updated successfully");
+                return new ResponseEntity<>(map, HttpStatus.OK);
+
+            } else {    // User not found
+                map.clear();
+                map.put("message", "User not found");
+                return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
+            }
+
+        } catch (Exception ex) {    // Exception
+            map.clear();
+            map.put("message", "Oops! something went wrong");
+            return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
 
 }
