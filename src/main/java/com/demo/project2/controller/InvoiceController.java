@@ -3,24 +3,22 @@
 
 package com.demo.project2.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.time.LocalDate;
 
 import com.demo.project2.model.IStatus;
 import com.demo.project2.model.Role;
 import com.demo.project2.model.URole;
+import com.demo.project2.security.services.UserDetailsImpl;
+import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -122,6 +120,36 @@ public class InvoiceController {
             return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/my-invoices")
+    @PreAuthorize("hasAnyRole('USER')")
+    public ResponseEntity<?> getMyInvoices() {
+        Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
+
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            Long id = userDetails.getId();
+
+            if (!invoiceRepository.findByCreatedBy(id).isEmpty()) {
+                List<Invoice> invoiceList = invoiceRepository.findByCreatedBy(id);
+
+                map.put("invoices", invoiceList);
+                return new ResponseEntity<>(map, HttpStatus.OK);
+
+            } else {    // No invoices found
+                map.clear();
+                map.put("message", "No invoices found");
+                return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
+            }
+
+        } catch (Exception ex) {    // Exception
+            map.clear();
+            map.put("message", "Oops! something went wrong");
+            return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
@@ -225,7 +253,7 @@ public class InvoiceController {
 
     @PutMapping("/{id}/update-status")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
-    public ResponseEntity<?> updateInvoice(@PathVariable Long id, @RequestParam String status) {
+    public ResponseEntity<?> updateInvoiceStatus(@PathVariable Long id, @RequestParam String status) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -238,17 +266,17 @@ public class InvoiceController {
                 if (!status.isEmpty()) {
 
                     switch (status) {
-                        case "pending":
+                        case "PENDING":
                             currentInvoice.setStatus(IStatus.PENDING);
                             break;
 
-                        case "approved":
+                        case "APPROVED":
                             if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("MODERATOR"))) {
                                 currentInvoice.setStatus(IStatus.APPROVED);
                             }
                             break;
 
-                        case "paid":
+                        case "PAID":
                             if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("MODERATOR"))) {
                                 currentInvoice.setStatus(IStatus.PAID);
                             }

@@ -2,6 +2,7 @@
 
 package com.demo.project2.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,5 +16,9 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
     @Override
     Optional<Invoice> findById(Long id);
+
+    List<Invoice> findByStatus(String status);
+
+    List<Invoice> findByCreatedBy(Long id);
 
 }
