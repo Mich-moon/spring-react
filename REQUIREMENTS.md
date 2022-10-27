@@ -1,4 +1,4 @@
-# DocPages Project Requirements
+# Project Requirements
 
 ## Functional Requirements
 
