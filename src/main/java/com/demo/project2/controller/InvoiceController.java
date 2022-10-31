@@ -6,9 +6,6 @@ package com.demo.project2.controller;
 import java.util.*;
 import java.time.LocalDate;
 
-import com.demo.project2.model.IStatus;
-import com.demo.project2.model.Role;
-import com.demo.project2.model.URole;
 import com.demo.project2.security.services.UserDetailsImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
 
 import com.demo.project2.model.Invoice;
+import com.demo.project2.model.IStatus;
 import com.demo.project2.repository.InvoiceRepository;
 
 import javax.validation.Valid;
@@ -87,22 +85,12 @@ public class InvoiceController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
+    @PreAuthorize("hasAnyRole('MODERATOR')")
     public ResponseEntity<?> getInvoices() {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
-        //Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
         try {
             List<Invoice> invoiceList = invoiceRepository.findAll();
-
-            /*List<Invoice> invoiceList = new ArrayList<>();
-
-            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("MODERATOR"))) {
-                invoiceList = invoiceRepository.findAll();
-            } else {
-                invoiceList = invoiceRepository.findAll();
-            }*/
 
             if (!invoiceList.isEmpty()) {  // Invoices found
                 map.put("invoices", invoiceList);
@@ -176,14 +164,36 @@ public class InvoiceController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('MODERATOR')")
+    @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?> deleteInvoice(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
         try {
-            invoiceRepository.deleteById(id);
-            map.put("message", "Invoice deleted successfully");
-            return new ResponseEntity<>(map, HttpStatus.OK);
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+            if (invoiceRepository.findById(id).isPresent()) {  // Invoice found
+                Invoice currentInvoice = invoiceRepository.findById(id).get(); // get value found
+
+                // check if non-moderator user tries to delete invoice created by someone else
+                if (auth != null && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"))) {
+                    UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+                    Long userId = userDetails.getId();
+
+                    if (!(currentInvoice.getCreatedBy() == userId)) {
+                        map.put("message", "Deleting others' invoices only authorized for moderator");
+                        return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+                    }
+                }
+
+                invoiceRepository.deleteById(id);
+                map.put("message", "Invoice deleted successfully");
+                return new ResponseEntity<>(map, HttpStatus.OK);
+
+            } else { // Invoice not found
+                map.clear();
+                map.put("message", "Invoice not found");
+                return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
+            }
 
         } catch (Exception ex) {    // Exception
             map.clear();
@@ -199,8 +209,21 @@ public class InvoiceController {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
         try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
             if (invoiceRepository.findById(id).isPresent()) {  // Invoice found
                 Invoice currentInvoice = invoiceRepository.findById(id).get(); // get value found
+
+                // check if non-moderator user tries to update invoice created by someone else
+                if (auth != null && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"))) {
+                    UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+                    Long userId = userDetails.getId();
+
+                    if ( !(currentInvoice.getCreatedBy() == userId) ) {
+                        map.put("message", "Editing others' invoices only authorized for moderator");
+                        return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+                    }
+                }
 
                 // updating invoice details - except status
                 currentInvoice.setDate(LocalDate.now()); // Date object - (year, month, day (yyyy-MM-dd))
@@ -236,7 +259,7 @@ public class InvoiceController {
                 map.put("message", "Invoice updated successfully");
                 return new ResponseEntity<>(map, HttpStatus.OK);
 
-            } else {    // User not found
+            } else {    // Invoice not found
                 map.clear();
                 map.put("message", "Invoice not found");
                 return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
@@ -256,44 +279,82 @@ public class InvoiceController {
     public ResponseEntity<?> updateInvoiceStatus(@PathVariable Long id, @RequestParam String status) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
         try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
             if (invoiceRepository.findById(id).isPresent()) {  // Invoice found
                 Invoice currentInvoice = invoiceRepository.findById(id).get(); // get value found
+                Boolean isNotAuthorised = false;
+                Boolean isStatusNotValid = false;
+
+                // check if non-moderator user tries to update invoice created by someone else
+                if (auth != null && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"))) {
+                    UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+                    Long userId = userDetails.getId();
+
+                    if ( !(currentInvoice.getCreatedBy() == userId) ) {
+                        map.put("message", "Editing others' invoices only authorized for moderator");
+                        return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+                    }
+                }
 
                 // updating invoice status
-                if (!status.isEmpty()) {
+                if (!status.isEmpty()) { // status provided
 
                     switch (status) {
+                        case "DRAFT":
+                            currentInvoice.setStatus(IStatus.DRAFT);
+                            break;
+
                         case "PENDING":
                             currentInvoice.setStatus(IStatus.PENDING);
                             break;
 
                         case "APPROVED":
-                            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("MODERATOR"))) {
+                            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"))) {
                                 currentInvoice.setStatus(IStatus.APPROVED);
+                            } else {
+                                isNotAuthorised = true;
                             }
                             break;
 
                         case "PAID":
-                            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("MODERATOR"))) {
+                            if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"))) {
                                 currentInvoice.setStatus(IStatus.PAID);
+                            } else {
+                                isNotAuthorised = true;
                             }
                             break;
 
                         default:
-                            currentInvoice.setStatus(IStatus.DRAFT);
+                            isStatusNotValid = true;
+                            break;
                     }
+
+                } else { // status not provided
+                    isStatusNotValid = true;
                 }
 
-                invoiceRepository.save(currentInvoice);   // save new details
+                if (isNotAuthorised) { // user not authorised
+                    map.clear();
+                    map.put("message", "Authorized only for moderators");
+                    return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
 
-                map.put("invoice", currentInvoice);
-                map.put("message", "Invoice updated successfully");
-                return new ResponseEntity<>(map, HttpStatus.OK);
+                } else if (isStatusNotValid) { // status not valid
+                    map.clear();
+                    map.put("message", "Invalid status");
+                    return new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
 
-            } else {    // User not found
+                } else {
+                    invoiceRepository.save(currentInvoice);   // save new details
+
+                    map.clear();
+                    map.put("invoice", currentInvoice);
+                    map.put("message", "Invoice updated successfully");
+                    return new ResponseEntity<>(map, HttpStatus.OK);
+                }
+
+            } else {    // Invoice not found
                 map.clear();
                 map.put("message", "Invoice not found");
                 return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);

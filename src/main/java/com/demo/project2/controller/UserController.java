@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.demo.project2.model.IStatus;
+import com.demo.project2.security.services.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,8 @@ import org.springframework.http.HttpStatus;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
 
 import com.demo.project2.model.User;
+import com.demo.project2.model.Role;
+import com.demo.project2.model.URole;
 import com.demo.project2.repository.UserRepository;
 
 
@@ -92,9 +98,31 @@ public class UserController {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
         try {
-            userRepository.deleteById(id);
-            map.put("message", "User deleted successfully");
-            return new ResponseEntity<>(map, HttpStatus.OK);
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+            if (userRepository.findById(id).isPresent()) {  // User found
+                User user = userRepository.findById(id).get(); // get value found
+
+                // check if non-admin user tries to delete another user
+                if (auth != null && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                    UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+                    Long userId = userDetails.getId();
+
+                    if (!(user.getId() == userId)) {
+                        map.put("message", "Deleting other users only authorized for admins");
+                        return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+                    }
+                }
+
+                userRepository.deleteById(id);
+                map.put("message", "User deleted successfully");
+                return new ResponseEntity<>(map, HttpStatus.OK);
+
+            } else { // User not found
+                map.clear();
+                map.put("message", "Invoice not found");
+                return new ResponseEntity<>(map, HttpStatus.NOT_FOUND);
+            }
 
         } catch (Exception ex) {    // Exception
             map.clear();
@@ -110,23 +138,40 @@ public class UserController {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
         try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
             if (userRepository.findById(id).isPresent()) {  // User found
-                User currentUser = userRepository.findById(id).get(); // get value found
+                User user = userRepository.findById(id).get(); // get value found
+
+                // check if non-admin user tries to update another user
+                if (auth != null && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                    UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+                    Long userId = userDetails.getId();
+
+                    if (!(user.getId() == userId)) {
+                        map.put("message", "Updating other users' info only authorized for admins");
+                        return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+                    }
+                }
 
                 // updating user details
-                currentUser.setEmail(userUpdate.getEmail());
-                currentUser.setFirstName(userUpdate.getFirstName());
-                currentUser.setLastName(userUpdate.getLastName());
-                // EXCLUDED - currentUser.setPassword(encoder.encode( userUpdate.getPassword() ));
+                user.setEmail(userUpdate.getEmail());
+                user.setFirstName(userUpdate.getFirstName());
+                user.setLastName(userUpdate.getLastName());
+                // EXCLUDED - user.setPassword(encoder.encode( userUpdate.getPassword() ));
 
-                // NB modify the roles that Hibernate is tracking
-                currentUser.getRoles().clear();
-                currentUser.getRoles().addAll(userUpdate.getRoles());
-                // DON'T DO THIS -> currentUser.setRoles(userUpdate.getRoles());
+                // allow only admin users to update user roles
+                if (auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                    // NB modify the roles that Hibernate is tracking
+                    user.getRoles().clear();
+                    user.getRoles().addAll(userUpdate.getRoles());
+                    // DON'T DO THIS -> user.setRoles(userUpdate.getRoles());
+                }
 
-                userRepository.save(currentUser);   // save new details
+                userRepository.save(user);   // save new details
 
                 map.put("message", "User updated successfully");
+                map.put("user", user);
                 return new ResponseEntity<>(map, HttpStatus.OK);
 
             } else {    // User not found
@@ -149,12 +194,25 @@ public class UserController {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
         try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
             if (userRepository.findById(id).isPresent()) {  // User found
-                User currentUser = userRepository.findById(id).get(); // get value found
+                User user = userRepository.findById(id).get(); // get value found
 
-                currentUser.setPassword(encoder.encode( newPassword )); // update user password
+                // check if non-admin user tries to update another user's password
+                if (auth != null && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                    UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+                    Long userId = userDetails.getId();
 
-                userRepository.save(currentUser);   // save new details
+                    if (!(user.getId() == userId)) {
+                        map.put("message", "Updating other users' passwords only authorized for admins");
+                        return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+                    }
+                }
+
+                user.setPassword(encoder.encode( newPassword )); // update user password
+
+                userRepository.save(user);   // save new details
 
                 map.put("message", "User password updated successfully");
                 return new ResponseEntity<>(map, HttpStatus.OK);
