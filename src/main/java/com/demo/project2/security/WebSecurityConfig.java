@@ -95,10 +95,10 @@ public class WebSecurityConfig {
                 .csrf().disable().exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 .authorizeRequests()
-                .antMatchers("/api/auth/**").permitAll()
-                .antMatchers("/api/users/**").permitAll()
-                .antMatchers("/api/invoices/**").permitAll()
-                .antMatchers("/api/test/**").permitAll()
+                .antMatchers("/api/v1/auth/**").permitAll()
+                .antMatchers("/api/v1/users/**").permitAll()
+                .antMatchers("/api/v1/invoices/**").permitAll()
+                .antMatchers("/api/v1/test/**").permitAll()
                 .anyRequest().authenticated();
 
 

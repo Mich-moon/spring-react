@@ -47,7 +47,7 @@ import com.demo.project2.security.services.UserDetailsImpl;
 
 @CrossOrigin(origins = "http://localhost:3000", maxAge = 3600) // to avoid CORS issues:
 @RestController
-@RequestMapping("api/auth")
+@RequestMapping("api/v1/auth")
 public class AuthController {
 
     @Autowired
@@ -130,8 +130,8 @@ public class AuthController {
 
         } catch (Exception ex) {    // creation unsuccessful
             map.clear();
-            //map.put("message", "Oops, something went wrong" );
-            map.put("message", ex.toString() );
+            map.put("message", "Oops, something went wrong" );
+            //map.put("message", ex.toString() );
             return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -229,8 +229,8 @@ public class AuthController {
 
         } catch (Exception ex) {    // Exception
             map.clear();
-            map.put("message", ex.toString() );
-            //map.put("message", "Oops! something went wrong");
+            //map.put("message", ex.toString() );
+            map.put("message", "Oops! something went wrong");
             return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

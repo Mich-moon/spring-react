@@ -33,7 +33,7 @@ import com.demo.project2.repository.UserRepository;
 
 @CrossOrigin(origins = "http://localhost:3000") // to avoid CORS issues:
 @RestController
-@RequestMapping("api/users")
+@RequestMapping("api/v1")
 public class UserController {
 
     @Autowired
@@ -42,7 +42,7 @@ public class UserController {
     @Autowired
     private PasswordEncoder encoder;
 
-    @GetMapping
+    @GetMapping("/users")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
     public ResponseEntity<?> getUsers() {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -67,7 +67,7 @@ public class UserController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/user/{id}")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR', 'ADMIN')")
     public ResponseEntity<?>  getUser(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -92,7 +92,7 @@ public class UserController {
 
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/user/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -132,7 +132,7 @@ public class UserController {
 
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/user/{id}")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> updateUser(@RequestBody User userUpdate, @PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -188,7 +188,7 @@ public class UserController {
 
     }
 
-    @PutMapping("/newpassword/{id}")
+    @PatchMapping("/user/{id}/password")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<?> updateUserPassword(@RequestBody String newPassword, @PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details

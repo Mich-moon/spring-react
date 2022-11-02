@@ -31,14 +31,14 @@ import javax.validation.Valid;
 
 @CrossOrigin(origins = "http://localhost:3000") // to avoid CORS issues:
 @RestController
-@RequestMapping("api/invoices")
+@RequestMapping("api/v1")
 public class InvoiceController {
 
     @Autowired
     private InvoiceRepository invoiceRepository;
 
 
-    @PostMapping
+    @PostMapping("/invoice")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?>  createInvoice(@Valid @RequestBody Invoice invoiceDetails) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -78,13 +78,13 @@ public class InvoiceController {
 
         } catch (Exception ex) {    // creation unsuccessful
             map.clear();
-            map.put("message", ex.toString() );
-            //map.put("message", "Oops, something went wrong" );
+            //map.put("message", ex.toString() );
+            map.put("message", "Oops, something went wrong" );
             return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping
+    @GetMapping("/invoices")
     @PreAuthorize("hasAnyRole('MODERATOR')")
     public ResponseEntity<?> getInvoices() {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -109,15 +109,24 @@ public class InvoiceController {
         }
     }
 
-    @GetMapping("/my-invoices")
+    @GetMapping("/user/{id}/invoices")
     @PreAuthorize("hasAnyRole('USER')")
-    public ResponseEntity<?> getMyInvoices() {
+    public ResponseEntity<?> getUserInvoices(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
 
         try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-            Long id = userDetails.getId();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+            // check if non-moderator user tries to get invoice created by someone else
+            if (auth != null && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"))) {
+                UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
+                Long userId = userDetails.getId();
+
+                if (!(id == userId)) {
+                    map.put("message", "Requesting others' invoices only authorized for moderator");
+                    return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+                }
+            }
 
             if (!invoiceRepository.findByCreatedBy(id).isEmpty()) {
                 List<Invoice> invoiceList = invoiceRepository.findByCreatedBy(id);
@@ -139,7 +148,7 @@ public class InvoiceController {
     }
 
 
-    @GetMapping("/{id}")
+    @GetMapping("/invoice/{id}")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?>  getInvoice(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -163,7 +172,7 @@ public class InvoiceController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/invoice/{id}")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?> deleteInvoice(@PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -183,6 +192,13 @@ public class InvoiceController {
                         map.put("message", "Deleting others' invoices only authorized for moderator");
                         return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
                     }
+
+                    // check if non-moderator user tries to delete an invoice with status APPROVED or PAID
+                    if (currentInvoice.getStatus() == IStatus.APPROVED || currentInvoice.getStatus() == IStatus.PAID) {
+                        map.put("message", "Deleting " + currentInvoice.getStatus() + " invoice only authorized for moderator");
+                        return new ResponseEntity<>(map, HttpStatus.UNAUTHORIZED);
+                    }
+
                 }
 
                 invoiceRepository.deleteById(id);
@@ -197,13 +213,13 @@ public class InvoiceController {
 
         } catch (Exception ex) {    // Exception
             map.clear();
-            map.put("message", ex.toString() );
-            //map.put("message", "Oops! something went wrong");
+            //map.put("message", ex.toString() );
+            map.put("message", "Oops! something went wrong");
             return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/invoice/{id}")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?> updateInvoice(@RequestBody Invoice invoiceUpdate, @PathVariable Long id) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
@@ -267,14 +283,14 @@ public class InvoiceController {
 
         } catch (Exception ex) {    // Exception
             map.clear();
-            map.put("message", ex.toString() );
-            //map.put("message", "Oops! something went wrong");
+            //map.put("message", ex.toString() );
+            map.put("message", "Oops! something went wrong");
             return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
-    @PutMapping("/{id}/update-status")
+    @PatchMapping("/invoice/{id}/status")
     @PreAuthorize("hasAnyRole('USER', 'MODERATOR')")
     public ResponseEntity<?> updateInvoiceStatus(@PathVariable Long id, @RequestParam String status) {
         Map<String, Object> map = new LinkedHashMap<String, Object>();  // for holding response details
