@@ -12,7 +12,8 @@ Requirements:
   
 ## Cloning
 1. in git terminal, run the command ```git clone https://github.com/Mich-moon/spring-react.git```
-2. to clone the frontend submodule, run the command ```git submodule foreach git pull origin main```
+2. to clone the frontend submodule, run the command ```git submodule foreach git pull origin main```, 
+   then ```git submodule update --init```
 
 ## Running and Testing
 
