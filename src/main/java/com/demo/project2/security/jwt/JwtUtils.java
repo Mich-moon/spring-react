@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 import com.demo.project2.security.services.UserDetailsImpl;
 
-import static com.sun.org.apache.xml.internal.security.algorithms.SignatureAlgorithm.*;
+//import static com.sun.org.apache.xml.internal.security.algorithms.SignatureAlgorithm.*;
 import static io.jsonwebtoken.SignatureAlgorithm.HS512;
 
 
